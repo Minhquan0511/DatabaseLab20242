@@ -93,55 +93,60 @@
     </div>
   </div>
 
- <script>
-  let isLogin = true;
+  <script>
+    let isLogin = true;
 
-  function toggleForm() {
-    isLogin = !isLogin;
+    function toggleForm() {
+      isLogin = !isLogin;
 
-    document.getElementById("form-title").textContent = isLogin ? "Đăng nhập" : "Đăng ký";
-    document.getElementById("submit-button").textContent = isLogin ? "Đăng nhập" : "Đăng ký";
-    document.getElementById("toggle-text").textContent = isLogin ? "Chưa có tài khoản?" : "Đã có tài khoản?";
-    document.getElementById("toggle-button").textContent = isLogin ? "Đăng ký" : "Đăng nhập";
+      // Reset form values khi chuyển đổi
+      document.getElementById("email").value = "";
+      document.getElementById("password").value = "";
+      document.getElementById("username").value = "";
 
-    // Hiện/ẩn trường Tên người dùng khi đăng ký
-    document.getElementById("username-field").style.display = isLogin ? "none" : "block";
-  }
+      // Cập nhật giao diện
+      document.getElementById("form-title").textContent = isLogin ? "Đăng nhập" : "Đăng ký";
+      document.getElementById("submit-button").textContent = isLogin ? "Đăng nhập" : "Đăng ký";
+      document.getElementById("toggle-text").textContent = isLogin ? "Chưa có tài khoản?" : "Đã có tài khoản?";
+      document.getElementById("toggle-button").textContent = isLogin ? "Đăng ký" : "Đăng nhập";
 
-  document.getElementById("auth-form").addEventListener("submit", function (e) {
-    e.preventDefault();
-    
-    const email = document.getElementById("email").value;
-    const password = document.getElementById("password").value;
-    const username = isLogin ? null : document.getElementById("username").value;
-
-    if (isLogin) {
-      // Kiểm tra thông tin đăng nhập
-      const storedEmail = localStorage.getItem("userEmail");
-      const storedPassword = localStorage.getItem("userPassword");
-
-      if (email === storedEmail && password === storedPassword) {
-        alert("Đăng nhập thành công!");
-        window.location.href = "dashboard.html"; // Chuyển hướng sang dashboard
-      } else {
-        alert("Email hoặc mật khẩu không đúng!");
-      }
-    } else {
-      // Lưu thông tin đăng ký vào localStorage
-      if (!username) {
-        alert("Vui lòng nhập tên người dùng!");
-        return;
-      }
-
-      localStorage.setItem("userEmail", email);
-      localStorage.setItem("userPassword", password);
-      localStorage.setItem("username", username);
-
-      alert("Đăng ký thành công! Chuyển hướng sang dashboard.");
-      window.location.href = "dashboard.html"; // Chuyển hướng sau khi đăng ký
+      // Hiện/ẩn trường Tên người dùng khi đăng ký
+      document.getElementById("username-field").style.display = isLogin ? "none" : "block";
     }
-  });
-</script>
 
+    document.getElementById("auth-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      const username = isLogin ? null : document.getElementById("username").value;
+
+      if (isLogin) {
+        // Kiểm tra thông tin đăng nhập
+        const storedEmail = localStorage.getItem("userEmail");
+        const storedPassword = localStorage.getItem("userPassword");
+
+        if (email === storedEmail && password === storedPassword) {
+          alert("Đăng nhập thành công!");
+          window.location.href = "dashboard.html";
+        } else {
+          alert("Email hoặc mật khẩu không đúng!");
+        }
+      } else {
+        // Lưu thông tin đăng ký vào localStorage
+        if (!username) {
+          alert("Vui lòng nhập tên người dùng!");
+          return;
+        }
+
+        localStorage.setItem("userEmail", email);
+        localStorage.setItem("userPassword", password);
+        localStorage.setItem("username", username);
+
+        alert("Đăng ký thành công! Vui lòng đăng nhập.");
+        toggleForm(); // Chuyển về form đăng nhập sau khi đăng ký
+      }
+    });
+  </script>
 </body>
 </html>
