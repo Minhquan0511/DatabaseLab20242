@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quản lý bãi đỗ xe</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f3f4f6;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background-color: #2563eb;
+      color: white;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .container {
+      max-width: 400px;
+      margin: 3rem auto;
+      background-color: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.75rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    button {
+      width: 100%;
+      padding: 0.75rem;
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background-color: #1d4ed8;
+    }
+
+    .toggle {
+      text-align: center;
+      margin-top: 1rem;
+    }
+
+    .toggle button {
+      background: none;
+      color: #2563eb;
+      border: none;
+      cursor: pointer;
+      font-size: 0.95rem;
+      padding: 0;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Quản lý bãi đỗ xe</h1>
+  </header>
+
+  <div class="container">
+    <h2 id="form-title">Đăng nhập</h2>
+    <form id="auth-form">
+      <div id="username-field" style="display: none;">
+        <input type="text" placeholder="Tên người dùng" id="username" />
+      </div>
+      <input type="email" placeholder="Email" id="email" required />
+      <input type="password" placeholder="Mật khẩu" id="password" required />
+      <button type="submit" id="submit-button">Đăng nhập</button>
+    </form>
+
+    <div class="toggle">
+      <span id="toggle-text">Chưa có tài khoản?</span>
+      <button onclick="toggleForm()" id="toggle-button">Đăng ký</button>
+    </div>
+  </div>
+
+ <script>
+  let isLogin = true;
+
+  function toggleForm() {
+    isLogin = !isLogin;
+
+    document.getElementById("form-title").textContent = isLogin ? "Đăng nhập" : "Đăng ký";
+    document.getElementById("submit-button").textContent = isLogin ? "Đăng nhập" : "Đăng ký";
+    document.getElementById("toggle-text").textContent = isLogin ? "Chưa có tài khoản?" : "Đã có tài khoản?";
+    document.getElementById("toggle-button").textContent = isLogin ? "Đăng ký" : "Đăng nhập";
+
+    // Hiện/ẩn trường Tên người dùng khi đăng ký
+    document.getElementById("username-field").style.display = isLogin ? "none" : "block";
+  }
+
+  document.getElementById("auth-form").addEventListener("submit", function (e) {
+    e.preventDefault();
+    
+    const email = document.getElementById("email").value;
+    const password = document.getElementById("password").value;
+    const username = isLogin ? null : document.getElementById("username").value;
+
+    if (isLogin) {
+      // Kiểm tra thông tin đăng nhập
+      const storedEmail = localStorage.getItem("userEmail");
+      const storedPassword = localStorage.getItem("userPassword");
+
+      if (email === storedEmail && password === storedPassword) {
+        alert("Đăng nhập thành công!");
+        window.location.href = "dashboard.html"; // Chuyển hướng sang dashboard
+      } else {
+        alert("Email hoặc mật khẩu không đúng!");
+      }
+    } else {
+      // Lưu thông tin đăng ký vào localStorage
+      if (!username) {
+        alert("Vui lòng nhập tên người dùng!");
+        return;
+      }
+
+      localStorage.setItem("userEmail", email);
+      localStorage.setItem("userPassword", password);
+      localStorage.setItem("username", username);
+
+      alert("Đăng ký thành công! Chuyển hướng sang dashboard.");
+      window.location.href = "dashboard.html"; // Chuyển hướng sau khi đăng ký
+    }
+  });
+</script>
+
+</body>
+</html>
