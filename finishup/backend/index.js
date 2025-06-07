@@ -11,6 +11,7 @@ const shiftsDetailsRoutes = require('./routes/shiftsDetails');
 const ticketsRoutes = require('./routes/tickets');
 const usersRoutes = require('./routes/users');
 const vehiclesRoutes = require('./routes/vehicles');
+const dashboardRoutes = require('./routes/dashboard');
 require('dotenv').config();
 
 const app = express();
@@ -36,6 +37,7 @@ app.use('/api', shiftsDetailsRoutes);
 app.use('/api', ticketsRoutes);
 app.use('/api', usersRoutes);
 app.use('/api', vehiclesRoutes);
+app.use('/api/dashboard', dashboardRoutes);
 
 // Start server
 const PORT = process.env.PORT || 5001;

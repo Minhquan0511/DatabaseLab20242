@@ -25,6 +25,7 @@ exports.getTicket = async (req, res) => {
 };
 
 exports.createTicket = async (req, res) => {
+  console.log('Create ticket body:', req.body); // Thêm dòng này
   const { LicensePlate, IssuedTime, ExpiredTime, ServiceID } = req.body;
   if (!LicensePlate || !IssuedTime || !ExpiredTime || !ServiceID) {
     return res.status(400).json({ error: 'Missing required fields' });
@@ -41,6 +42,7 @@ exports.createTicket = async (req, res) => {
 exports.updateTicket = async (req, res) => {
   const { TicketID } = req.params;
   const { LicensePlate, IssuedTime, ExpiredTime, ServiceID } = req.body;
+  console.log('Update ticket:', { TicketID, LicensePlate, IssuedTime, ExpiredTime, ServiceID });
   if (!LicensePlate || !IssuedTime || !ExpiredTime || !ServiceID) {
     return res.status(400).json({ error: 'Missing required fields' });
   }

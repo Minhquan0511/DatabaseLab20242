@@ -1,5 +1,11 @@
 const pool = require('../utils/database');
 
+function toMySQLDateTime(isoString) {
+  const date = new Date(isoString);
+  const pad = n => n < 10 ? '0' + n : n;
+  return `${date.getFullYear()}-${pad(date.getMonth()+1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+}
+
 class Ticket {
   static async findAll() {
     const [rows] = await pool.query('SELECT * FROM Tickets');
@@ -12,18 +18,27 @@ class Ticket {
   }
 
   static async create({ LicensePlate, IssuedTime, ExpiredTime, ServiceID }) {
+    const issuedTimeMySQL = toMySQLDateTime(IssuedTime);
+    const expiredTimeMySQL = toMySQLDateTime(ExpiredTime);
+
+    // Lấy giá dịch vụ
+    const [serviceRows] = await pool.query('SELECT ServicePrice FROM Services WHERE ServiceID = ?', [ServiceID]);
+    const Amount = serviceRows[0]?.ServicePrice || 0;
+
     const [result] = await pool.query(
       'INSERT INTO Tickets (LicensePlate, IssuedTime, ExpiredTime, ServiceID) VALUES (?, ?, ?, ?)',
-      [LicensePlate, IssuedTime, ExpiredTime, ServiceID]
+      [LicensePlate, issuedTimeMySQL, expiredTimeMySQL, ServiceID]
     );
     const [newTicket] = await pool.query('SELECT * FROM Tickets WHERE TicketID = ?', [result.insertId]);
     return newTicket[0];
   }
 
   static async update(TicketID, { LicensePlate, IssuedTime, ExpiredTime, ServiceID }) {
+    const issuedTimeMySQL = toMySQLDateTime(IssuedTime);
+    const expiredTimeMySQL = toMySQLDateTime(ExpiredTime);
     const [result] = await pool.query(
       'UPDATE Tickets SET LicensePlate = ?, IssuedTime = ?, ExpiredTime = ?, ServiceID = ? WHERE TicketID = ?',
-      [LicensePlate, IssuedTime, ExpiredTime, ServiceID, TicketID]
+      [LicensePlate, issuedTimeMySQL, expiredTimeMySQL, ServiceID, TicketID]
     );
     if (result.affectedRows === 0) {
       throw new Error('Ticket not found');

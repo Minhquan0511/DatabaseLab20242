@@ -133,8 +133,21 @@ export const deleteEmployee = async (employeeID) => {
 };
 
 // Dashboard Stats
-export const getDashboardStats = async () => {
+export async function getDashboardStats() {
   const response = await api.get('/dashboard/stats');
+  return response.data;
+};
+
+// --- AUTHENTICATION / USERS ---
+// Register a new user
+export const signUp = async (userData) => {
+  const response = await api.post('/users/register', userData);
+  return response.data;
+};
+
+// Login user
+export const signIn = async (credentials) => {
+  const response = await api.post('/users/login', credentials);
   return response.data;
 };
 

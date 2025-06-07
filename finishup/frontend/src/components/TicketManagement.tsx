@@ -91,7 +91,10 @@ export function TicketManagement() {
       const ticket = tickets.find(t => t.TicketID === ticketId);
       if (!ticket) return;
       const updatedTicket = {
+        LicensePlate: ticket.LicensePlate,
+        IssuedTime: ticket.IssuedTime,
         ExpiredTime: new Date(new Date(ticket.ExpiredTime).getTime() + 2 * 3600000).toISOString(),
+        ServiceID: ticket.ServiceID,
       };
       await updateTicket(ticketId, updatedTicket);
       setTickets(tickets.map(t =>
@@ -112,10 +115,17 @@ export function TicketManagement() {
 
   const handleVoidTicket = async (ticketId: number) => {
     try {
-      const updatedTicket = { Status: 'Used' };
-      await updateTicket(ticketId, updatedTicket);
+      const ticket = tickets.find(t => t.TicketID === ticketId);
+      if (!ticket) return;
+      await updateTicket(ticket.TicketID, {
+        LicensePlate: ticket.LicensePlate,
+        IssuedTime: ticket.IssuedTime,
+        ExpiredTime: ticket.ExpiredTime,
+        ServiceID: ticket.ServiceID,
+        // Nếu muốn void, có thể thêm Status: 'Voided' nếu backend hỗ trợ
+      });
       setTickets(tickets.map(t =>
-        t.TicketID === ticketId ? { ...t, ...updatedTicket } : t
+        t.TicketID === ticketId ? { ...t, Status: 'Used' } : t
       ));
       toast({
         title: "Ticket Voided",
