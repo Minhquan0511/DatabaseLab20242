@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const shiftController = require('../controller/shifts');
+const shiftController = require('../controllers/shifts');
 const authenticateToken = require('../middleware/auth');
 
 router.get('/shifts', authenticateToken, shiftController.getShifts);

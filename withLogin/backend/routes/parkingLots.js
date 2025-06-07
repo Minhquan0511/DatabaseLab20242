@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const parkingLotController = require('../controller/parkingLots');
+const parkingLotController = require('../controllers/parkingLots');
 const authenticateToken = require('../middleware/auth');
 
 router.get('/parking-lots', authenticateToken, parkingLotController.getParkingLots);

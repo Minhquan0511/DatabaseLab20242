@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const employeeController = require('../controller/employees');
+const employeeController = require('../controllers/employees');
 const authenticateToken = require('../middleware/auth');
 
 router.get('/employees', authenticateToken, employeeController.getEmployees);

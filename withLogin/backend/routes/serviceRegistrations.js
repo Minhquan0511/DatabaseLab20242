@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const serviceRegistrationController = require('../controller/serviceRegistrations');
+const serviceRegistrationController = require('../controllers/serviceRegistrations');
 const authenticateToken = require('../middleware/auth');
 
 router.get('/service-registrations', authenticateToken, serviceRegistrationController.getServiceRegistrations);
