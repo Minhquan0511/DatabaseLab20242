@@ -5,8 +5,7 @@ exports.getServices = async (req, res) => {
     const services = await Service.findAll();
     res.json(services);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Internal server error' });
+    res.status(500).json({ error: 'Failed to fetch services' });
   }
 };
 

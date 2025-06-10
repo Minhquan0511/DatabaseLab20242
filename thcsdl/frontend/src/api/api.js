@@ -141,13 +141,13 @@ export async function getDashboardStats() {
 // --- AUTHENTICATION / USERS ---
 // Register a new user
 export const signUp = async (userData) => {
-  const response = await api.post('/users/register', userData);
+  const response = await api.post('/auth/register', userData);
   return response.data;
 };
 
 // Login user
 export const signIn = async (credentials) => {
-  const response = await api.post('/users/login', credentials);
+  const response = await api.post('/auth/login', credentials);
   return response.data;
 };
 

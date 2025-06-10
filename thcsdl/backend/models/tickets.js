@@ -17,7 +17,7 @@ class Ticket {
     return rows[0];
   }
 
-  static async create({ LicensePlate, IssuedTime, ExpiredTime, ServiceID }) {
+  static async create({ LicensePlate, IssuedTime, ExpiredTime, ServiceID, ParkingSpotID }) {
     const issuedTimeMySQL = toMySQLDateTime(IssuedTime);
     const expiredTimeMySQL = toMySQLDateTime(ExpiredTime);
 
@@ -26,8 +26,8 @@ class Ticket {
     const Amount = serviceRows[0]?.ServicePrice || 0;
 
     const [result] = await pool.query(
-      'INSERT INTO Tickets (LicensePlate, IssuedTime, ExpiredTime, ServiceID) VALUES (?, ?, ?, ?)',
-      [LicensePlate, issuedTimeMySQL, expiredTimeMySQL, ServiceID]
+      'INSERT INTO Tickets (LicensePlate, IssuedTime, ExpiredTime, ServiceID, ParkingSpotID) VALUES (?, ?, ?, ?, ?)',
+      [LicensePlate, issuedTimeMySQL, expiredTimeMySQL, ServiceID, ParkingSpotID]
     );
     const [newTicket] = await pool.query('SELECT * FROM Tickets WHERE TicketID = ?', [result.insertId]);
     return newTicket[0];

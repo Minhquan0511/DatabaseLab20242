@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,12 +8,13 @@ import { Plus, Edit, Trash2, Settings } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { getServices, addService, updateService, deleteService } from "@/api/api"; // <-- Import API functions
 
 interface Service {
-  serviceID: number;
-  serviceName: string;
-  servicePrice: number;
-  vehicleType: string;
+  ServiceID: number;
+  ServiceName: string;
+  ServicePrice: number;
+  VehicleType: string;
   activeRegistrations: number;
 }
 
@@ -22,76 +22,102 @@ export function ServiceManagement() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingService, setEditingService] = useState<Service | null>(null);
+  const [services, setServices] = useState<Service[]>([]);
   const { toast } = useToast();
 
-  // Mock data
-  const [services, setServices] = useState<Service[]>([
-    { serviceID: 1, serviceName: "Monthly Parking", servicePrice: 150.00, vehicleType: "Car", activeRegistrations: 45 },
-    { serviceID: 2, serviceName: "Daily Parking", servicePrice: 15.00, vehicleType: "Car", activeRegistrations: 123 },
-    { serviceID: 3, serviceName: "Motorcycle Parking", servicePrice: 8.00, vehicleType: "Motorcycle", activeRegistrations: 28 },
-    { serviceID: 4, serviceName: "Electric Vehicle Charging", servicePrice: 25.00, vehicleType: "Electric", activeRegistrations: 12 },
-    { serviceID: 5, serviceName: "Premium Parking", servicePrice: 200.00, vehicleType: "Car", activeRegistrations: 18 },
-    { serviceID: 6, serviceName: "Overnight Parking", servicePrice: 20.00, vehicleType: "All", activeRegistrations: 67 },
-  ]);
-
-  const handleAddService = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    console.log('Adding service...');
-    const formData = new FormData(event.currentTarget);
-    const newService: Service = {
-      serviceID: Math.max(...services.map(s => s.serviceID)) + 1,
-      serviceName: formData.get('serviceName') as string,
-      servicePrice: parseFloat(formData.get('servicePrice') as string),
-      vehicleType: formData.get('vehicleType') as string,
-      activeRegistrations: 0,
+  // Fetch services from backend
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const data = await getServices();
+        setServices(data);
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: "Failed to fetch services.",
+          variant: "destructive",
+        });
+      }
     };
-    setServices([...services, newService]);
-    setIsAddDialogOpen(false);
-    toast({
-      title: "Service Added",
-      description: `${newService.serviceName} has been added successfully.`,
-    });
+    fetchServices();
+  }, [toast]);
+
+  const handleAddService = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    const newService = {
+      ServiceName: formData.get('serviceName') as string,
+      ServicePrice: parseFloat(formData.get('servicePrice') as string),
+      VehicleType: formData.get('vehicleType') as string,
+    };
+    try {
+      const created = await addService(newService);
+      setServices(prev => [...prev, { ...created, activeRegistrations: 0 }]);
+      setIsAddDialogOpen(false);
+      toast({
+        title: "Service Added",
+        description: `${created.ServiceName} has been added successfully.`,
+      });
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to add service.",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleEditService = (service: Service) => {
-    console.log('Edit service clicked:', service.serviceID);
     setEditingService(service);
     setIsEditDialogOpen(true);
   };
 
-  const handleUpdateService = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleUpdateService = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!editingService) return;
-    
-    console.log('Updating service:', editingService.serviceID);
     const formData = new FormData(event.currentTarget);
-    const updatedService: Service = {
-      ...editingService,
-      serviceName: formData.get('serviceName') as string,
-      servicePrice: parseFloat(formData.get('servicePrice') as string),
-      vehicleType: formData.get('vehicleType') as string,
+    const updatedService = {
+      ServiceName: formData.get('serviceName') as string,
+      ServicePrice: parseFloat(formData.get('servicePrice') as string),
+      VehicleType: formData.get('vehicleType') as string,
     };
-    
-    setServices(services.map(s => 
-      s.serviceID === editingService.serviceID ? updatedService : s
-    ));
-    setIsEditDialogOpen(false);
-    setEditingService(null);
-    toast({
-      title: "Service Updated",
-      description: `${updatedService.serviceName} has been updated successfully.`,
-    });
-  };
-
-  const handleDeleteService = (service: Service) => {
-    console.log('Delete service clicked:', service.serviceID);
-    if (window.confirm(`Are you sure you want to delete ${service.serviceName}?`)) {
-      setServices(services.filter(s => s.serviceID !== service.serviceID));
+    try {
+      const updated = await updateService(editingService.ServiceID, updatedService);
+      setServices(services.map(s =>
+        s.ServiceID === editingService.ServiceID ? { ...updated, activeRegistrations: s.activeRegistrations ?? 0 } : s
+      ));
+      setIsEditDialogOpen(false);
+      setEditingService(null);
       toast({
-        title: "Service Deleted",
-        description: `${service.serviceName} has been deleted.`,
+        title: "Service Updated",
+        description: `${updated.ServiceName} has been updated successfully.`,
+      });
+    } catch {
+      toast({
+        title: "Error",
+        description: "Failed to update service.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleDeleteService = async (service: Service) => {
+    if (window.confirm(`Are you sure you want to delete ${service.ServiceName}?`)) {
+      try {
+        await deleteService(service.ServiceID);
+        setServices(services.filter(s => s.ServiceID !== service.ServiceID));
+        toast({
+          title: "Service Deleted",
+          description: `${service.ServiceName} has been deleted.`,
+          variant: "destructive",
+        });
+      } catch {
+        toast({
+          title: "Error",
+          description: "Failed to delete service.",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -166,7 +192,7 @@ export function ServiceManagement() {
                 <Input 
                   id="editServiceName" 
                   name="serviceName" 
-                  defaultValue={editingService.serviceName}
+                  defaultValue={editingService.ServiceName}
                   required 
                 />
               </div>
@@ -175,7 +201,7 @@ export function ServiceManagement() {
                 <Input 
                   id="editServicePrice" 
                   name="servicePrice" 
-                  defaultValue={editingService.servicePrice}
+                  defaultValue={editingService.ServicePrice}
                   type="number" 
                   step="0.01" 
                   required 
@@ -183,7 +209,7 @@ export function ServiceManagement() {
               </div>
               <div>
                 <Label htmlFor="editVehicleType">Vehicle Type</Label>
-                <Select name="vehicleType" defaultValue={editingService.vehicleType} required>
+                <Select name="vehicleType" defaultValue={editingService.VehicleType} required>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
@@ -208,7 +234,7 @@ export function ServiceManagement() {
       {/* Services Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {services.map((service) => (
-          <Card key={service.serviceID} className="hover:shadow-lg transition-shadow">
+          <Card key={service.ServiceID} className="hover:shadow-lg transition-shadow">
             <CardContent className="pt-6">
               <div className="space-y-4">
                 <div className="flex items-start justify-between">
@@ -217,8 +243,8 @@ export function ServiceManagement() {
                       <Settings className="h-5 w-5 text-blue-600" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-lg">{service.serviceName}</h3>
-                      <p className="text-sm text-gray-600">ID: {service.serviceID}</p>
+                      <h3 className="font-semibold text-lg">{service.ServiceName}</h3>
+                      <p className="text-sm text-gray-600">ID: {service.ServiceID}</p>
                     </div>
                   </div>
                 </div>
@@ -226,25 +252,25 @@ export function ServiceManagement() {
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Price:</span>
-                    <span className="text-lg font-bold text-green-600">${service.servicePrice}</span>
+                    <span className="text-lg font-bold text-green-600">${service.ServicePrice}</span>
                   </div>
                   
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Vehicle Type:</span>
-                    <Badge className={getVehicleTypeColor(service.vehicleType)}>
-                      {service.vehicleType}
+                    <Badge className={getVehicleTypeColor(service.VehicleType)}>
+                      {service.VehicleType}
                     </Badge>
                   </div>
                   
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Active Users:</span>
-                    <span className="font-medium">{service.activeRegistrations}</span>
+                    <span className="font-medium">{service.activeRegistrations ?? 0}</span>
                   </div>
                   
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-gray-600">Monthly Revenue:</span>
                     <span className="font-medium text-green-600">
-                      ${(service.servicePrice * service.activeRegistrations).toLocaleString()}
+                      ${(service.ServicePrice * (service.activeRegistrations ?? 0)).toLocaleString()}
                     </span>
                   </div>
                 </div>
@@ -286,7 +312,7 @@ export function ServiceManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {services.reduce((sum, service) => sum + service.activeRegistrations, 0)}
+              {services.reduce((sum, service) => sum + (service.activeRegistrations ?? 0), 0)}
             </div>
           </CardContent>
         </Card>
@@ -297,7 +323,7 @@ export function ServiceManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              ${services.reduce((sum, service) => sum + (service.servicePrice * service.activeRegistrations), 0).toLocaleString()}
+              ${services.reduce((sum, service) => sum + (service.ServicePrice * (service.activeRegistrations ?? 0)), 0).toLocaleString()}
             </div>
           </CardContent>
         </Card>

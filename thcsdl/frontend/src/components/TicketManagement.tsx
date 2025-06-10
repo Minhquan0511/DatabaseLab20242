@@ -8,7 +8,7 @@ import { Plus, Search, Clock, Car, Ticket } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { getTickets, addTicket, updateTicket, getCustomers, getVehicles, getServices } from "@/api/api";
+import { getTickets, addTicket, updateTicket, getCustomers, getVehicles, getServices, getParkingSpots } from "@/api/api";
 
 interface Ticket {
   TicketID: number;
@@ -37,6 +37,14 @@ interface Service {
   ServiceName: string;
 }
 
+interface ParkingSpot {
+  ParkingSpotID: number;
+  SpotType: string;
+  Status: string;
+  ParkID: number;
+  ParkName?: string;
+}
+
 export function TicketManagement() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
@@ -44,19 +52,24 @@ export function TicketManagement() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [vehicles, setVehicles] = useState<Vehicle[]>([]);
   const [services, setServices] = useState<Service[]>([]);
+  const [parkingSpots, setParkingSpots] = useState<ParkingSpot[]>([]);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
+  const [selectedLicensePlate, setSelectedLicensePlate] = useState<string>("");
+  const [selectedServiceID, setSelectedServiceID] = useState<string>("");
+  const [selectedParkingSpotID, setSelectedParkingSpotID] = useState<string>("");
 
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true);
       try {
-        const [ticketData, customerData, vehicleData, serviceData] = await Promise.all([
+        const [ticketData, customerData, vehicleData, serviceData, parkingSpotData] = await Promise.all([
           getTickets(),
           getCustomers(),
           getVehicles(),
           getServices(),
+          getParkingSpots(),
         ]);
         const enrichedTickets = ticketData.map(ticket => {
           const vehicle = vehicleData.find(v => v.LicensePlate === ticket.LicensePlate);
@@ -73,6 +86,7 @@ export function TicketManagement() {
         setCustomers(customerData);
         setVehicles(vehicleData);
         setServices(serviceData);
+        setParkingSpots(parkingSpotData.filter((spot: ParkingSpot) => spot.Status === "Available"));
       } catch (error) {
         toast({
           title: "Error",
@@ -167,10 +181,18 @@ export function TicketManagement() {
 
   const handleIssueNewTicket = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const formData = new FormData(event.currentTarget);
+    if (!selectedLicensePlate || !selectedServiceID || !selectedParkingSpotID) {
+      toast({
+        title: "Error",
+        description: "Please select all required fields.",
+        variant: "destructive",
+      });
+      return;
+    }
     const newTicket = {
-      LicensePlate: formData.get('LicensePlate') as string,
-      ServiceID: parseInt(formData.get('ServiceID') as string),
+      LicensePlate: selectedLicensePlate,
+      ServiceID: parseInt(selectedServiceID),
+      ParkingSpotID: parseInt(selectedParkingSpotID),
       IssuedTime: new Date().toISOString(),
       ExpiredTime: new Date(Date.now() + 8 * 3600000).toISOString(),
     };
@@ -254,10 +276,13 @@ export function TicketManagement() {
             <DialogHeader>
               <DialogTitle>Issue New Ticket</DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleIssueNewTicket} className="space-y-4">
+            <form
+              onSubmit={handleIssueNewTicket}
+              className="space-y-4"
+            >
               <div>
                 <Label htmlFor="LicensePlate">License Plate</Label>
-                <Select name="LicensePlate" required>
+                <Select value={selectedLicensePlate} onValueChange={setSelectedLicensePlate} required>
                   <SelectTrigger>
                     <SelectValue placeholder="Select vehicle" />
                   </SelectTrigger>
@@ -272,7 +297,7 @@ export function TicketManagement() {
               </div>
               <div>
                 <Label htmlFor="ServiceID">Service</Label>
-                <Select name="ServiceID" required>
+                <Select value={selectedServiceID} onValueChange={setSelectedServiceID} required>
                   <SelectTrigger>
                     <SelectValue placeholder="Select service" />
                   </SelectTrigger>
@@ -280,6 +305,21 @@ export function TicketManagement() {
                     {services.map(service => (
                       <SelectItem key={service.ServiceID} value={service.ServiceID.toString()}>
                         {service.ServiceName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="ParkingSpotID">Parking Spot</Label>
+                <Select value={selectedParkingSpotID} onValueChange={setSelectedParkingSpotID} required>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select parking spot" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {parkingSpots.map(spot => (
+                      <SelectItem key={spot.ParkingSpotID} value={spot.ParkingSpotID.toString()}>
+                        Spot #{spot.ParkingSpotID} ({spot.SpotType})
                       </SelectItem>
                     ))}
                   </SelectContent>

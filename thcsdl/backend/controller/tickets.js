@@ -1,4 +1,6 @@
 const Ticket = require('../models/tickets');
+const ParkingSpot = require('../models/parkingSpots');
+const Vehicle = require('../models/vehicles');
 
 exports.getTickets = async (req, res) => {
   try {
@@ -25,13 +27,36 @@ exports.getTicket = async (req, res) => {
 };
 
 exports.createTicket = async (req, res) => {
-  console.log('Create ticket body:', req.body); // Thêm dòng này
-  const { LicensePlate, IssuedTime, ExpiredTime, ServiceID } = req.body;
-  if (!LicensePlate || !IssuedTime || !ExpiredTime || !ServiceID) {
+  const { LicensePlate, IssuedTime, ExpiredTime, ServiceID, ParkingSpotID } = req.body;
+  if (!LicensePlate || !IssuedTime || !ExpiredTime || !ServiceID || !ParkingSpotID) {
     return res.status(400).json({ error: 'Missing required fields' });
   }
   try {
-    const newTicket = await Ticket.create({ LicensePlate, IssuedTime, ExpiredTime, ServiceID });
+    const vehicle = await Vehicle.findByLicensePlate(LicensePlate);
+    if (!vehicle) {
+      return res.status(404).json({ error: 'Vehicle not found' });
+    }
+    const spot = await ParkingSpot.findById(ParkingSpotID);
+    if (!spot || spot.Status !== 'Available') {
+      return res.status(400).json({ error: 'Selected parking spot is not available' });
+    }
+
+    const newTicket = await Ticket.create({
+      LicensePlate,
+      IssuedTime,
+      ExpiredTime,
+      ServiceID,
+      ParkingSpotID
+    });
+
+    // Update parking spot status
+    await ParkingSpot.update(ParkingSpotID, {
+      Status: 'Occupied',
+      LicensePlate,
+      StartTime: IssuedTime,
+      EndTime: ExpiredTime
+    });
+
     res.status(201).json(newTicket);
   } catch (error) {
     console.error(error);

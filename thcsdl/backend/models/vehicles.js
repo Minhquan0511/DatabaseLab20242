@@ -38,6 +38,11 @@ class Vehicle {
       throw new Error('Vehicle not found');
     }
   }
+
+  static async findByLicensePlate(licensePlate) {
+    const [rows] = await pool.query('SELECT * FROM Vehicles WHERE LicensePlate = ?', [licensePlate]);
+    return rows[0];
+  }
 }
 
 module.exports = Vehicle;

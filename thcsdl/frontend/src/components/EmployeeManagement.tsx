@@ -432,7 +432,9 @@ export function EmployeeManagement() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              ${employees.reduce((sum, emp) => sum + emp.Salary, 0).toLocaleString()}
+              ${employees
+  .reduce((sum, emp) => sum + (typeof emp.Salary === "number" && !isNaN(emp.Salary) ? emp.Salary : 0), 0)
+  .toLocaleString()}
             </div>
           </CardContent>
         </Card>
